@@ -1,0 +1,34 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: test-management-cluster-kuberhealthy
+  namespace: flux-system
+spec:
+  targetNamespace: kuberhealthy
+  interval: 5m
+  test:
+    enable: true
+  # kubeConfig:
+  #   secretRef:
+  #     name: kubeconfig-test-cluster
+  values:
+    prometheus:
+      enabled: false
+  chart:
+    spec:
+      chart: kuberhealthy
+      version: '70'
+      sourceRef:
+        kind: HelmRepository
+        name: kuberhealthy
+        namespace: flux-system
+      interval: 1m
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      remediateLastFailure: true
+      strategy: uninstall

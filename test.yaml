@@ -1,0 +1,72 @@
+apiVersion: v1
+data:
+  identity: # ...
+  identity.pub: # ...
+  known_hosts: # ...
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: asummers-flux-bug-report
+  namespace: flux-system
+
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: GitRepository
+metadata:
+  name: asummers-flux-bug-report
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: asummers-flux-bug-report
+  url: ssh://git@github.com/asummers/flux-bug-report
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: test-management-cluster-kuberhealthy-preinstall
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./test/preinstall
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: asummers-flux-bug-report
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: test-cluster-kuberhealthy-preinstall
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./test/preinstall
+  kubeConfig:
+    secretRef:
+      name: kubeconfig-test-cluster
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: asummers-flux-bug-report
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: test-kuberhealthy
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  dependsOn:
+  - name: test-management-cluster-kuberhealthy-preinstall
+  - name: test-cluster-kuberhealthy-preinstall
+  path: ./test/kuberhealthy
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: asummers-flux-bug-report
